@@ -7,11 +7,16 @@ def main():
 
     res = (1275, 720)
     screen = pygame.display.set_mode(res)
-    while(True):
+    my_font = pygame.freetype.Font("D:/python/trabalho final python/NotoSans-Regular.ttf", 38)
 
+
+    while(True):
+        exit_menu = False
         y = 0
+        y2 = 0
 
         while(True):
+
             for event in pygame.event.get():
                 if (event.type == pygame.QUIT):
                     exit()
@@ -26,17 +31,34 @@ def main():
 
             #Se o utilizador clicar numa das opções o ciclo quebra, prosseguindo para um novo ciclo onde se randomizam as imagens nas posições da dificuldade escolhida
             if event.type == pygame.MOUSEBUTTONDOWN:
-                y = start_game(screen, menu_pos)
+                y = next_menu(screen, menu_pos)
 
                 if y != 0:
                     #Se a opção escolhida for EXIT o programa termina
                     if y >= 520:
                         exit()
 
-                    screen.fill(pygame.Color("blue"))
+                    screen.fill(pygame.Color("grey"))
                     break
             else:
                 continue
+
+        while(True):
+            for event in pygame.event.get():
+                if (event.type == pygame.QUIT):
+                    exit()
+            second_menu_pos = dificulty_mode(screen, y2)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                y = start_game(screen, second_menu_pos)
+                if y != 0:
+                    #Se a opção escolhida for EXIT o programa termina
+                    if y >= 520:
+                        exit_menu = True
+                        screen.fill((0,0,20))
+                        break
+
+                    screen.fill(pygame.Color("blue"))
+                    break
 
 
         #setpos é um set que recebe as posições das cartas para serem desenhadas
@@ -46,72 +68,126 @@ def main():
 
         cycle = 0
         mouse_on_card = 0
+        already_used = []
+        k = 0
+        exit_selected = 0
+        card_selected = 0
+        score = 0
+        penalização = 0
+
+        if exit_menu == False:
+            while(True):
+
+                EXIT = False
+
+                for event in pygame.event.get():
+                    E,X,I,T, white_card, exit_selected, card_selected = mouse_card(screen, setpos, cycle, mouse_on_card, exit_selected, card_selected)
+                    pontuação(screen, cycle, score, penalização)
+                    draw_format(screen, click_pos, click_form, click_color, click_fill)
+                    m_x, m_y = pygame.mouse.get_pos()
+                    cycle = 1
+                    coord = 0
+                    pair_not_chosen = True
+
+                    if (event.type == pygame.QUIT):
+                        exit()
+
+                    if (white_card != 0):
+                        mouse_on_card = white_card
+
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+
+                        if (m_x >= E and m_x <= I and m_y >= X and m_y <= T):
+                            EXIT = True
+                            break
+
+                        coord, first_pos, pair_form, pair_color, pair_fill = first_click(screen, click_pos, click_form, click_color, click_fill, already_used)
+                        if (first_pos in already_used):
+                            coord = 0
+                        elif (coord != 0):
+                            pygame.display.update(first_pos)
+
+                    if coord != 0:
+                        mouse_on_card = 0
+                        startime = time.time()
 
 
+                        while(pair_not_chosen):
 
-        while(True):
+                            endtime = time.time()
+                            estime = endtime - startime
 
-            EXIT = False
-
-            for event in pygame.event.get():
-                E,X,I,T, white_card = mouse_card(screen, setpos, cycle, mouse_on_card)
-                draw_format(screen, click_pos, click_form, click_color, click_fill)
-                m_x, m_y = pygame.mouse.get_pos()
-                cycle = 1
-                coord = 0
-                pair_not_chosen = True
-
-                if (event.type == pygame.QUIT):
-                    exit()
-
-                if (white_card != 0):
-                    mouse_on_card = white_card
-
-                if event.type == pygame.MOUSEBUTTONDOWN:
-
-                    if (m_x >= E and m_x <= I and m_y >= X and m_y <= T):
-                        EXIT = True
-                        break
-
-                    coord, first_pos, pair_form, pair_color, pair_fill = first_click(screen, click_pos, click_form, click_color, click_fill)
-
-                if coord != 0:
-                    mouse_on_card = 0
-                    startime = time.time()
-                    estime = 0
-
-                    while(pair_not_chosen):
-                                #Está a fazer como SE FOSSE O MESMO MOUSEBUTTON DE LA DE CIMA
-                        if event.type == pygame.MOUSEBUTTONDOWN:
-                            coord2, pair_pos = pair_click(screen, click_pos, pair_form, pair_color, pair_fill, click_form, click_color, click_fill)
-
-                            if coord2 == 0:
-                                endtime = time.time()
-                                estime = endtime - startime
-                                if (estime > 1.0):
-                                    break
-                                continue
-
-                            elif coord2 != "pair":
-                                pair_not_chosen = False
-                                while(estime < 1.0):
-                                    endtime = time.time()
-                                    estime = endtime - startime
-                                timed_out (screen, pair_pos)
+                            if (estime > 2.0):
                                 timed_out(screen, first_pos)
+                                break
 
-                            else:
-                                pair_not_chosen = False
-                                while(estime < 1.0):
-                                    endtime = time.time()
-                                    estime = endtime - startime
-                                timed_out (screen, pair_pos)
-                                timed_out(screen, first_pos)
-                                print(estime)
+                            for event in pygame.event.get():
+                                if event.type == pygame.MOUSEBUTTONDOWN:
+                                    coord2, pair_pos = pair_click(screen, click_pos, first_pos, pair_form, pair_color, pair_fill, click_form, click_color, click_fill, already_used)
+
+                                    if (pair_pos in already_used):
+                                        coord2 = 0
+                                    elif (coord2 != 0):
+                                        pygame.display.update(pair_pos)
+
+                                    if coord2 == 0:
+                                        continue
+
+                                    elif coord2 != "pair":
+                                        pair_not_chosen = False
+                                        if score > 0:
+                                            cycle = 0
+                                            score = pontuação(screen, cycle, score, penalização)
+                                            penalização += 1
+                                        pygame.event.set_blocked(pygame.MOUSEBUTTONDOWN)
+                                        time.sleep(0.8)
+                                        pygame.event.set_allowed(pygame.MOUSEBUTTONDOWN)
+
+                                        timed_out(screen, first_pos)
+                                        timed_out (screen, pair_pos)
+
+                                    else:
+
+                                        if ((pair_pos in already_used) or (pair_pos == first_pos)):
+                                            continue
+                                        else:
+                                            already_used.append(chr(97+ k))
+                                            already_used[k] = first_pos
+                                            already_used.append(chr(98 + k))
+                                            already_used[k + 1] = pair_pos
+                                            pair_not_chosen = False
+                                            pygame.event.set_blocked(pygame.MOUSEBUTTONDOWN)
+                                            time.sleep(0.8)
+                                            pygame.event.set_allowed(pygame.MOUSEBUTTONDOWN)
+                                            penalização = 0
+                                            score += 100
+                                            cycle = 0
+                                            pontuação(screen, cycle, score, penalização)
+
+                                            if first_pos in setpos:
+                                                setpos.remove(first_pos)
+
+                                            if pair_pos in setpos:
+                                                setpos.remove(pair_pos)
+
+                                            if bool(setpos) == False:
+                                                screen.fill((0,0,20))
+                                                my_font.render_to(screen, (490,310), "Congratulations!", (255, 255, 255))
+                                                pygame.display.flip()
+                                                exit_selected = 1
+                                                my_font.render_to(screen, (40, 40), ('Score: ' + str(score)), (255, 255, 0))
+                                                pygame.display.update((30, 30, 200, 100))
+                                                cycle = 1
+                                                break
+
+                                            right_ans(screen, first_pos)
+                                            right_ans(screen, pair_pos)
+                                            k += 2
+
+                                    cycle = 1
+
                 if EXIT == True:
                     break
-            if EXIT == True:
-                break
 
 
 
@@ -148,6 +224,53 @@ def begining(screen,y1):
     pygame.display.flip()
 
     return menu_pos
+
+def next_menu(screen, menu_pos):
+
+    #Coordenadas do rato
+    m_x, m_y = pygame.mouse.get_pos()
+
+    #Deteta se o rato está por cima de alguma opção do menu e se sim retorna y
+    for i in menu_pos:
+        x,y,l,a = i
+        l += x
+        a += y
+        if (m_x >= x and m_x <= l and m_y >= y and m_y <= a):
+            screen.fill((0,0,20))
+            return y
+    return 0
+
+def dificulty_mode(screen,y2):
+
+    #Procura a fonte
+    my_font = pygame.freetype.Font("D:/python/trabalho final python/NotoSans-Regular.ttf", 24)
+
+    #Posições onde se desenham os retângulos das opções do menu, array com a escrita dentro dos rectângulos e variável que determina qual elemento do array se coloca dentro de cada rectângulo
+    second_menu_pos = [(547.5, 285, 180, 33),(547.5, 330, 180, 33), (547.5, 375, 180, 33), (547.5, 420, 180, 33), (547.5, 520, 180, 33)]
+    escrita = ["Noob","Intermediate","Pro","Expert","Exit"]
+    k = 0
+
+    #Para cada posição desenha o retângulo e escreve a opção
+    for i in second_menu_pos:
+
+        x,y,l,a = i
+        a = y + a/4
+
+        #Verifica se o utilizador tem o rato por cima de uma opção e se sim torna a opção branca
+        if y == y2:
+            pygame.draw.rect(screen, pygame.Color("white"), i, 4)
+            my_font.render_to(screen, (617.5, a), escrita[k], (255, 255, 255))
+
+        #Caso contrário desenha a amarelo
+        else:
+            pygame.draw.rect(screen, pygame.Color("yellow"), i, 4)
+            my_font.render_to(screen, (617.5, a), escrita[k], (255, 255, 0))
+
+        k += 1
+
+    pygame.display.flip()
+
+    return second_menu_pos
 
 def start_game(screen, menu_pos):
 
@@ -242,7 +365,7 @@ def randomizer( old_setpos):
     setcolor = {(0,0,0), (0, 255, 0, 255), (0, 229, 238, 255), (139, 90, 0, 255), (178, 34, 34, 255)}
     setform = {"rect", "circle", "triangle"}
     tupfill = (0,7)
-    
+
     #Cria um set no_rep (no repetition)
     no_rep = set()
     #Transforma o set recebido numa lista ordenada
@@ -288,10 +411,66 @@ def randomizer( old_setpos):
 
     return click_pos, click_form, click_color, click_fill
 
+def mouse_card(screen, setpos,cycle, mouse_on_card, exit_selected, card_selected):
+
+    my_font = pygame.freetype.Font("D:/python/trabalho final python/NotoSans-Regular.ttf", 24)
+    m_x, m_y = pygame.mouse.get_pos()
+
+    E,X,I,T = 10, 680, 100, 30
+    a = X + T/4
+    I += E
+    T += X
+
+    #Fiz com que apenas desenhá-se na primeira vez para reduzir o número de sobreposições de imagem
+    if (cycle == 0):
+        pygame.draw.rect(screen, pygame.Color("yellow"), (10, 680, 100, 30),4)
+        my_font.render_to(screen, (39, a), ('Exit'), (255, 255, 0))
+
+    #Se a opção exit tiver tido o rato em cima anteriormente ele volta a ficar amarelo
+    elif (exit_selected == 1 and (m_x >= E and m_x <= I and m_y >= X and m_y <= T) == False):
+        pygame.draw.rect(screen, pygame.Color("yellow"), (10, 680, 100, 30),4)
+        my_font.render_to(screen, (39, a), ('Exit'), (255, 255, 0))
+        pygame.display.update((10, 680, 100, 30))
+        exit_selected = 0
+
+    #Se a opção exit tiver o rate em cima ela desenha exit a branco
+    elif (m_x >= E and m_x <= I and m_y >= X and m_y <= T and (exit_selected != 1)):
+        pygame.draw.rect(screen, pygame.Color("white"), (10, 680, 100, 30), 4)
+        my_font.render_to(screen, (39, a), ('Exit'), (255, 255, 255))
+        pygame.display.update((10, 680, 100, 30))
+        exit_selected = 1
+
+
+    if (mouse_on_card != 0 and card_selected != 0):
+        x,y,l,a = mouse_on_card
+        l += x
+        a += y
+        if ((m_x >= x and m_x <= l and m_y >= y and m_y <= a) == False):
+            pygame.draw.rect(screen, pygame.Color("yellow"), mouse_on_card, 0)
+            pygame.display.update(mouse_on_card)
+            card_selected = 0
+
+    for i in setpos:
+        x,y,l,a = i
+        l += x
+        a += y
+
+        if (cycle == 0):
+            pygame.draw.rect(screen, pygame.Color("yellow"),i, 0)
+            pygame.display.flip()
+
+        elif (m_x >= x and m_x <= l and m_y >= y and m_y <= a and card_selected != 1):
+            pygame.draw.rect(screen, pygame.Color("white"), i, 0)
+            pygame.display.update(i)
+            card_selected = 1
+            return E,X,I,T, i, exit_selected, card_selected
+
+
+    return E,X,I,T, 0, exit_selected, card_selected
+
 def draw_format(screen, click_pos, click_form, click_color, click_fill):
 
     k = 0
-    f = 0
 
     for  i in click_pos:
 
@@ -328,7 +507,7 @@ def draw_format(screen, click_pos, click_form, click_color, click_fill):
             # Para as distinguir e manter a distinção entre quadrados, adicionei b à frente e realizei os cálculos
             # A ordem pode parecer aleatória mas é necessária para que não se alterem as váriáveis necessárias antes de os cálculos que as involvem serem concluídos
             # x3 e y(1,2) correspondem ao x centrado do ponto no topo, os restantes aos pontos de baixo
-            
+
             x3 = x + l / 2
             xb = x + 3 * l / 4
             x += l / 4
@@ -338,11 +517,8 @@ def draw_format(screen, click_pos, click_form, click_color, click_fill):
             pygame.draw.polygon(screen, click_color[k], [(int(x), int(y)),(int(xb), int(y)), (int(x3), int(yb))], click_fill[k])
 
         k += 1
-        f += k // 2
 
-
-
-def pair_click(screen, click_pos, pair_form, pair_color, pair_fill, click_form, click_color, click_fill):
+def first_click(screen, click_pos, click_form, click_color, click_fill, already_used):
 
     m_x, m_y = pygame.mouse.get_pos()
     k = 0
@@ -353,82 +529,6 @@ def pair_click(screen, click_pos, pair_form, pair_color, pair_fill, click_form, 
         a += y
 
         if (m_x >= x and m_x <= l and m_y >= y and m_y <= a):
-
-            pygame.display.update(i)
-
-            if k % 2 == 0:
-                if pair_form != click_form[k+1] or pair_color != click_color[k+1] or pair_fill != click_fill[k+1]:
-                    return 1, i
-                else:
-                    return "pair", i
-            else:
-                if pair_form != click_form[k-1] or pair_color != click_color[k-1] or pair_fill != click_fill[k-1]:
-                    return 1, i
-                else:
-                    return "pair", i
-        k += 1
-    return 0, 0
-
-
-def timed_out(screen, rect_coord):
-
-    pygame.draw.rect(screen, pygame.Color("yellow"), rect_coord, 0)
-    pygame.display.update(rect_coord)
-
-def mouse_card(screen, setpos,cicle, mouse_on_card):
-
-    my_font = pygame.freetype.Font("D:/python/trabalho final python/NotoSans-Regular.ttf", 24)
-    m_x, m_y = pygame.mouse.get_pos()
-
-    E,X,I,T = 10, 680, 100, 30
-    a = X + T/4
-    I += E
-    T += X
-
-    if (m_x >= E and m_x <= I and m_y >= X and m_y <= T):
-        pygame.draw.rect(screen, pygame.Color("white"), (10, 680, 100, 30), 4)
-        my_font.render_to(screen, (39, a), ('Exit'), (255, 255, 255))
-    else:
-        pygame.draw.rect(screen, pygame.Color("yellow"), (10, 680, 100, 30),4)
-        my_font.render_to(screen, (39, a), ('Exit'), (255, 255, 0))
-
-    if (mouse_on_card != 0):
-        x,y,l,a = mouse_on_card
-        l += x
-        a += y
-        if ((m_x >= x and m_x <= l and m_y >= y and m_y <= a) == False):
-            pygame.draw.rect(screen, pygame.Color("yellow"), mouse_on_card, 0)
-            pygame.display.update(mouse_on_card)
-
-    for i in setpos:
-        x,y,l,a = i
-        l += x
-        a += y
-
-        if cicle == 0:
-            pygame.draw.rect(screen, pygame.Color("yellow"),i, 0)
-            pygame.display.flip()
-
-        elif (m_x >= x and m_x <= l and m_y >= y and m_y <= a):
-            pygame.draw.rect(screen, pygame.Color("white"), i, 0)
-            pygame.display.update(i)
-            return E,X,I,T, i
-
-
-    return E,X,I,T, 0
-
-def first_click(screen, click_pos, click_form, click_color, click_fill):
-
-    m_x, m_y = pygame.mouse.get_pos()
-    k = 0
-
-    for i in click_pos:
-        x,y,l,a = i
-        l += x
-        a += y
-
-        if (m_x >= x and m_x <= l and m_y >= y and m_y <= a):
-            pygame.display.update(i)
             pair_form = click_form[k]
             pair_color = click_color[k]
             pair_fill = click_fill[k]
@@ -436,5 +536,57 @@ def first_click(screen, click_pos, click_form, click_color, click_fill):
 
         k += 1
     return 0,0, 0, 0, 0
+
+def pair_click(screen, click_pos, first_pos, pair_form, pair_color, pair_fill, click_form, click_color, click_fill, already_used):
+
+    m_x, m_y = pygame.mouse.get_pos()
+    k = 0
+
+    for i in click_pos:
+        x,y,l,a = i
+        l += x
+        a += y
+
+        if (m_x >= x and m_x <= l and m_y >= y and m_y <= a):
+
+
+            if pair_form != click_form[k] or pair_color != click_color[k] or pair_fill != click_fill[k]:
+                return 1, i
+
+            else:
+                return "pair", i
+
+        k += 1
+    return 0, 0
+
+def pontuação(screen, cycle, score, penalização):
+
+    my_font = pygame.freetype.Font("D:/python/trabalho final python/NotoSans-Regular.ttf", 32)
+
+    if (penalização != 0):
+        score -= 20 * (2 ** (penalização - 1))
+
+    if (score < 0):
+        score = 0
+
+    #Fiz com que apenas desenhá-se na primeira vez para reduzir o número de sobreposições de imagem
+    if (cycle == 0):
+        pygame.draw.rect(screen, pygame.Color("blue"), (30, 30, 200, 100), 0)
+        my_font.render_to(screen, (40, 40), ('Score: ' + str(score)), (255, 255, 0))
+        pygame.display.update((30, 30, 200, 100))
+
+
+    return score
+
+def timed_out(screen, rect_coord):
+
+    pygame.draw.rect(screen, pygame.Color("yellow"), rect_coord, 0)
+    pygame.display.update(rect_coord)
+
+def right_ans(screen, rect_coord):
+
+    pygame.draw.rect(screen, pygame.Color("blue"), rect_coord, 0)
+    pygame.display.update(rect_coord)
+
 
 main()
